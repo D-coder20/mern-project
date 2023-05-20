@@ -3,11 +3,9 @@ const bcrypt = require("bcryptjs");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 
-//asynchandler to handle the exception no need to use try catch block
-//@desc register new user
-//@route Post /api/users
-//@access Public
-
+// @desc    Register new user
+// @route   POST /api/users
+// @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -16,7 +14,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Please add all fields");
   }
 
-  //check if the user exists
+  // Check if user exists
   const userExists = await User.findOne({ email });
 
   if (userExists) {
@@ -24,11 +22,11 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
-  //Hash password
+  // Hash password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  //create the user
+  // Create user
   const user = await User.create({
     name,
     email,
@@ -48,19 +46,16 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-//@desc Authenticate a user
-//@route Post /api/users/login
-//@access Public
-
+// @desc    Authenticate a user
+// @route   POST /api/users/login
+// @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  //console.log(req.body);
-  //check for user email
 
+  // Check for user email
   const user = await User.findOne({ email });
-  //console.log(user);
-  if (user || (await bcrypt.compare(password, user.password))) {
-    console.log(user);
+
+  if (user && (await bcrypt.compare(password, user.password))) {
     res.json({
       _id: user.id,
       name: user.name,
@@ -73,20 +68,14 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-//@desc Get user data
-//@route Get /api/users/me
-//@access private
-
+// @desc    Get user data
+// @route   GET /api/users/me
+// @access  Private
 const getMe = asyncHandler(async (req, res) => {
-  const { _id, name, email } = await User.findById(req.user.id);
-  res.status(200).json({
-    id: _id,
-    name,
-    email,
-  });
+  res.status(200).json(req.user);
 });
 
-//generate JWT
+// Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
